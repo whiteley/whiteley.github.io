@@ -13,7 +13,7 @@ provided attributes and output a table in your terminal. My buddy [JD][jd]
 helped out with some refactoring and it's a much more pleasant way to find that
 AMI id you need.
 
-{% gist 9b473ad1a695cc521f6c %}
+{% gist whiteley/9b473ad1a695cc521f6c %}
 
 {% highlight console %}
 $ ubuntu-cloud-images suite:precise region:us-west-2 type:ebs
