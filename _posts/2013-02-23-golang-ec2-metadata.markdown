@@ -10,6 +10,8 @@ interaction with this is in Chef as learned by Ohai, but I wanted something
 standalone. I keep wanting to play with [Go][golang] more, and this seemed like
 a fun Sunday morning hack (translation: homework avoidance).
 
+{% gist 4751059 %}
+
 {% highlight console %}
 # setup Go
 wget -P /tmp http://go.googlecode.com/files/go1.0.3.linux-amd64.tar.gz

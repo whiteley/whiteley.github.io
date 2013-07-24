@@ -25,6 +25,8 @@ together a [script][gist] to launch and log into these one-off instances. The
 helpful `tcp_test_ssh` and `wait_for_sshd` methods are grabbed mostly verbatim
 from the previously mentioned [knife-ec2][knife-ec2] plugin.
 
+{% gist 4282468 %}
+
 [ey-cloud]: http://www.engineyard.com/products/cloud
 [knife-ec2]: http://wiki.opscode.com/display/chef/Launch+Cloud+Instances+with+Knife
 [chef]: http://www.opscode.com/chef/
