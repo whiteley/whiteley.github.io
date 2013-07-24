@@ -1,0 +1,31 @@
+---
+layout: post
+title: EC2 Launching
+categories: ec2 chef
+---
+
+Everyday I launch a lot of EC2 instances as part of a controlled process:
+
+* deploying an application in the [Engine Yard Cloud][ey-cloud] Dashboard
+* using the [EC2 plugin for the knife][knife-ec2] cli tool for [Opscode Chef][chef]
+
+I also wind up running a lot of ad-hoc instances for quick experiments. This
+required a frustrating multi-step dance:
+
+0. `ec2-run-instances`
+0. highlight and copy the Instance ID
+0. wait long enough that networking is provisioned
+0. `ec2-describe-instances` with the pasted id
+0. highlight and copy the *Public DNS* attribute
+0. wait long enough that sshd will be available before the connection times out
+0. `ssh -oForwardAgent=yes -oUserKnownHostsFile=/dev/null -oStrictHostKeyChecking=no -i ~/.ec2/keypair.pem` with the pasted hostname
+
+Last week I got to the breaking point during one of these cycles and hacked
+together a [script][gist] to launch and log into these one-off instances. The
+helpful `tcp_test_ssh` and `wait_for_sshd` methods are grabbed mostly verbatim
+from the previously mentioned [knife-ec2][knife-ec2] plugin.
+
+[ey-cloud]: http://www.engineyard.com/products/cloud
+[knife-ec2]: http://wiki.opscode.com/display/chef/Launch+Cloud+Instances+with+Knife
+[chef]: http://www.opscode.com/chef/
+[gist]: https://gist.github.com/4282468
