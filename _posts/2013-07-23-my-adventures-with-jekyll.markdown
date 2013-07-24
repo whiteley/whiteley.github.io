@@ -10,7 +10,7 @@ thoughts, and other work. This post is just here to get me started.
 
 A random trick I pulled off today, that I'm sure to forget:
 
-{% highlight bash %}
+{% highlight console %}
 $ brew list emacs | xargs \
     pax -w -z -s ,$(brew --prefix),, \
     -f ~/Downloads/emacs-$(stat -f '%Sc' -t '%Y%m%d')-brewed.tgz
