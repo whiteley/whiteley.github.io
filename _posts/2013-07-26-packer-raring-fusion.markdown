@@ -1,7 +1,8 @@
 ---
 layout: post
 title:  "Packer Definition for Ubuntu Raring on VMware Fusion"
-categories: ubuntu packer vmware_fusion
+categories: virtualization
+tags: packer vmware-fusion ubuntu
 ---
 
 I needed a virtual machine on my laptop to use with [Oz][oz] for offline

@@ -1,7 +1,8 @@
 ---
 layout: post
 title: Ubuntu Cloud AMI ID Finder
-categories: ubuntu ec2
+categories: virtualization
+tags: ubuntu ec2
 ---
 
 Recently, I've found myself loading up the [Ubuntu Cloud

@@ -1,7 +1,8 @@
 ---
 layout: post
 title: EC2 Launching
-categories: ec2 chef
+categories: virtualization
+tags: ec2 chef eycloud
 ---
 
 Everyday I launch a lot of EC2 instances as part of a controlled process:

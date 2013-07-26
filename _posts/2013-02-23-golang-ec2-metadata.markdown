@@ -1,7 +1,8 @@
 ---
 layout: post
 title: Crawl EC2 meta-data and output JSON
-categories: ubuntu ec2
+categories: virtualization
+tags: ubuntu ec2 golang
 ---
 
 Last week, while debugging an issue with some EC2 instances at work, I wanted

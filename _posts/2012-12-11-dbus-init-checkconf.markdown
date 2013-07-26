@@ -1,7 +1,8 @@
 ---
 layout: post
 title: Checking Upstart configuration syntax
-categories: ubuntu upstart
+categories: scripts
+tags: ubuntu upstart dbus
 ---
 
 There is a handy tool `init-checkconf` you can use to validate your freshly
