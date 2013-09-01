@@ -1,0 +1,188 @@
+---
+layout: post
+title:  "Docker on i386"
+categories: linux-containers
+tags: docker ubuntu
+---
+
+I have had a much outdated but heroically stable Dell PowerEdge 2550 for many
+years now. It's great to have a place to work on personal development projects
+without dealing with hourly costs etc, but sometimes the lack of performance can
+really be an issue. A lot of the work I've done in the past few years has been
+centered around virtualization and so the machine has collected more dust than
+it once did. I've been doing some work with [Docker][docker] recently and got
+excited that I could deploy some of my projects on this machine again. Somehow,
+I hadn't ever noticed that [Docker][docker] is only supported on `amd64` at this
+point.
+
+* "focusing on amd64 for now"
+* "it *should* work fine on 32-bit"
+* "you just need new images and a 32-bit docker binary"
+
+After some more searching I found that it wasn't incompatible but only
+[unsupported][docker-32-bit-issue]. With comments like these, I had a new yak to
+shave.
+
+The server started with a fully updated Ubuntu 13.04 install. I originally tried
+to use the available Go [deb packages][golang-raring] but they were too old
+(`1.0.2`) for [Docker][docker] which requires at least `1.1`. Next, I tried the
+[binary distribution][golang-binaries] but that was compiled with SSE2
+optimizations enabled. I would have to build Go from [source][golang-source].
+
+Building Go doesn't require a lot of prerequisites, but we need a
+compiler and mercurial to clone the sources.
+
+{% highlight console %}
+$ sudo apt-get -y install build-essential mercurial
+{% endhighlight %}
+
+Not only is this server 32-bit, but it's old enough to lack support for SSE2.
+{% highlight console %}
+$ export GO386=387
+{% endhighlight %}
+
+Clone the Go sources.
+{% highlight console %}
+$ hg clone -u release https://code.google.com/p/go /home/mwhiteley/p/go
+...
+{% endhighlight %}
+
+Build Go and add it to our path.
+{% highlight console %}
+$ pushd /home/mwhiteley/p/go/src
+$ ./all.bash
+...
+$ popd
+$ export GOPATH=/home/mwhiteley/go
+$ export PATH=$GOPATH/bin:$PATH:/home/mwhiteley/p/go/bin
+$ go version
+go version go1.1.2 linux/386
+{% endhighlight %}
+
+For Docker, we need a few more prerequisites such as the Linux Containers
+userspace tools and a kernel module for the Advanced Multi Layered Unification
+Filesystem.
+
+{% highlight console %}
+$ sudo apt-get -y install git linux-image-extra-$(uname -r) lxc xz-utils
+{% endhighlight %}
+
+Clone the Docker sources.
+{% highlight console %}
+$ git clone dotcloud/docker $GOPATH/src/github.com/dotcloud/docker
+...
+{% endhighlight %}
+
+Enable and build a 32-bit Docker.
+{% gist 6400552 server.go.diff %}
+{% highlight console %}
+$ pushd $GOPATH/src/github.com/dotcloud/docker
+$ curl https://gist.github.com/whiteley/6400552/raw/server.go.diff | git apply -
+$ go get -v github.com/dotcloud/docker/...
+$ go install -v github.com/dotcloud/docker/...
+$ popd
+$ docker version
+Go version (client): go1.1.2
+Go version (server): go1.1.2
+Last stable version: 0.6.1
+{% endhighlight %}
+
+A base image is just the contents of a minimal file system and we can create one
+with [debootstrap][debootstrap]. The `/etc/apt/sources.list` file will not
+contain anything except the single install repository.
+
+{% highlight console %}
+$ sudo debootstrap raring /tmp/rootfs
+$ for d in raring raring-security raring-updates raring-backports
+for> do echo "deb http://archive.ubuntu.com/ubuntu ${d} main universe multiverse"
+for> done | sudo tee /tmp/rootfs/etc/apt/sources.list
+deb http://archive.ubuntu.com/ubuntu raring main universe multiverse
+deb http://archive.ubuntu.com/ubuntu raring-security main universe multiverse
+deb http://archive.ubuntu.com/ubuntu raring-updates main universe multiverse
+deb http://archive.ubuntu.com/ubuntu raring-backports main universe multiverse
+$ sudo tar czf /home/mwhiteley/p/raring_base32_rootfs.tgz -C /tmp/rootfs .
+{% endhighlight %}
+
+We can now create a `docker` group and start the daemon. The group members will
+have access to connect directly to the daemon running as root and potentially
+gain root access on the host. Make sure to read the [instructions][why-sudo]
+carefully and only do this on a development machine.
+
+{% highlight console %}
+$ sudo addgroup docker
+Adding group `docker' (GID 1001) ...
+Done.
+$ sudo addgroup mwhiteley docker
+Adding user `mwhiteley' to group `docker' ...
+Adding user mwhiteley to group docker
+Done.
+$ sudo docker -d
+Loading containers: done.
+2013/08/31 17:25:41 WARNING: Your kernel does not support cgroup swap limit.
+2013/08/31 17:25:41 Listening for HTTP on /var/run/docker.sock (unix)
+{% endhighlight %}
+
+Now, in another terminal (a new login shell so your group membership takes
+effect), we can import the base image.
+
+{% highlight console %}
+$ cat /home/mwhiteley/raring_base32_rootfs.tgz | docker import - mwhiteley/base32
+c755b018548a
+$ docker images
+REPOSITORY          TAG                 ID                  CREATED             SIZE
+mwhiteley/base32    latest              c755b018548a        21 minutes ago      187.4 MB (virtual 187.4 MB)
+{% endhighlight %}
+
+Run a simple test to make sure that everything seems operational.
+
+{% highlight console %}
+$ docker run c755b018548a env
+HOME=/
+PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+container=lxc
+HOSTNAME=d60803fb36fe
+{% endhighlight %}
+
+Create a Dockerfile and build an image
+{% highlight console %}
+$ cat <<'EOP' >/home/mwhiteley/p/docker/chef/Dockerfile
+heredoc> FROM c755b018548a
+heredoc> MAINTAINER Matt Whiteley <mattwhiteley@gmail.com>
+heredoc> RUN apt-get update
+heredoc> RUN apt-get -y install curl git ruby1.9.3
+heredoc> RUN curl -L https://www.opscode.com/chef/install.sh | bash
+heredoc> EOP
+$ docker build /home/mwhiteley/p/docker/chef
+ ...
+ ---> b8d729360f11
+Successfully built b8d729360f11
+$ docker images
+REPOSITORY          TAG                 ID                  CREATED             SIZE
+<none>              <none>              b8d729360f11        19 seconds ago      88.5 MB (virtual 710.8 MB)
+mwhiteley/base32    latest              c755b018548a        35 minutes ago      187.4 MB (virtual 187.4 MB)
+{% endhighlight %}
+
+Wow, look at the size of that thing! Evidently the `ruby1.9.3` package in Ubuntu
+pulls in a ton of dependencies that we won't be needing and a different route
+for Ruby will save us a ton of space. For now, let's just make sure it all
+worked.
+
+{% highlight console %}
+$ docker run b8d729360f11 chef-solo --version
+Chef: 11.6.0
+{% endhighlight %}
+
+Awesome, [Docker][docker] running on my 866MHz Pentium III! Now, on to make some
+better images for test environments.
+
+[lxc]: http://en.wikipedia.org/wiki/LXC
+[docker]: http://www.docker.io/
+[docker-github]: https://github.com/dotcloud/docker
+[golang]: http://golang.org/
+[golang-source]: http://golang.org/doc/install/source
+[golang-raring]: https://launchpad.net/ubuntu/raring/i386/golang/2:1.0.2-2
+[golang-binaries]: https://code.google.com/p/go/downloads/list
+[chef-dockerfile]: https://gist.github.com/whiteley/6400552
+[docker-32-bit-issue]: https://github.com/dotcloud/docker/issues/136
+[why-sudo]: http://docs.docker.io/en/latest/use/basics/#why-sudo
+[debootstrap]: https://wiki.debian.org/Debootstrap
