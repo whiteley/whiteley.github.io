@@ -1,3 +1,7 @@
 name: Matt Whiteley
-pygments: true
+highlighter: rouge
 exclude: [vendor]
+analytics:
+  provider: google
+  google: 
+    tracking_id: 'UA-31454776-1'
