@@ -1,5 +1,4 @@
 name: Matt Whiteley
-highlighter: rouge
 exclude: [vendor]
 analytics:
   provider: google
