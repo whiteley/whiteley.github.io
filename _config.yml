@@ -2,5 +2,5 @@ name: Matt Whiteley
 exclude: [vendor]
 analytics:
   provider: google
-  google: 
+  google:
     tracking_id: 'UA-31454776-1'
