@@ -1,6 +1,12 @@
 name: Matt Whiteley
-exclude: [vendor]
+
 analytics:
   provider: google
   google:
     tracking_id: 'UA-31454776-1'
+
+exclude:
+  - vendor
+
+gems:
+  - jekyll-gist
