@@ -8,5 +8,5 @@ analytics:
 exclude:
   - vendor
 
-gems:
+plugins:
   - jekyll-gist
